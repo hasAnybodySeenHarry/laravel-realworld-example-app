@@ -100,12 +100,12 @@ jobs:
 
     - name: Generate CycloneDX SBOM
       run: |
-        syft scan ${{ env.IMAGE }}@${{ steps.digest.outputs.digest }} -o cyclonedx-json > sbom.cdx.json
+        syft scan ${{ steps.digest.outputs.digest }} -o cyclonedx-json > sbom.cdx.json
 
     - name: Sign image
       run: |
         COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" \
-        cosign sign --key cosign.key ${{ env.IMAGE }}@${{ steps.digest.outputs.digest }}
+        cosign sign --key cosign.key ${{ steps.digest.outputs.digest }}
 
     - name: Attest SBOM
       run: |
@@ -113,7 +113,7 @@ jobs:
         cosign attest --key cosign.key \
           --predicate sbom.cdx.json \
           --type cyclonedx \
-          ${{ env.IMAGE }}@${{ steps.digest.outputs.digest }}
+          ${{ steps.digest.outputs.digest }}
 
     - name: Import public key
       run: echo "${{ secrets.COSIGN_PUBLIC_KEY }}" > cosign.pub
@@ -121,7 +121,7 @@ jobs:
     - name: Verify Signature
       run: |
         COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" \
-        cosign verify --key cosign.pub ${{ env.IMAGE }}@${{ steps.digest.outputs.digest }}
+        cosign verify --key cosign.pub ${{ steps.digest.outputs.digest }}
 
     - name: Verify Attestation
       run: |
@@ -129,4 +129,4 @@ jobs:
         cosign verify-attestation \
           --key cosign.pub \
           --type cyclonedx \
-          ${{ env.IMAGE }}@${{ steps.digest.outputs.digest }}
+          ${{ steps.digest.outputs.digest }}
