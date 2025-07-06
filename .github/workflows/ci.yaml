@@ -89,7 +89,7 @@ jobs:
     - name: Install Cosign
       uses: sigstore/cosign-installer@v3
 
-    - name: Import Cosign key
+    - name: Import private key
       run: echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
 
     - name: Install Syft
@@ -112,15 +112,18 @@ jobs:
           --type cyclonedx \
           ${{ env.IMAGE }}@${{ steps.digest.outputs.digest }}
 
+    - name: Import public key
+      run: echo "${{ secrets.COSIGN_PUBLIC_KEY }}" > cosign.pub
+
     - name: Verify Signature
       run: |
         COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" \
-        cosign verify --key cosign.key ${{ env.IMAGE }}@${{ steps.digest.outputs.digest }}
+        cosign verify --key cosign.pub ${{ env.IMAGE }}@${{ steps.digest.outputs.digest }}
 
     - name: Verify Attestation
       run: |
         COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" \
         cosign verify-attestation \
-          --key cosign.key \
+          --key cosign.pub \
           --type cyclonedx \
           ${{ env.IMAGE }}@${{ steps.digest.outputs.digest }}
