@@ -172,6 +172,7 @@ jobs:
         mkdir -p storage bootstrap/cache \
           && chown -R www-data:www-data /var/www \
           && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+        head -n -2 entrypoint.sh > tmp.sh && mv tmp.sh entrypoint.sh
         chmod +x ./entrypoint.sh
         ./entrypoint.sh
 
