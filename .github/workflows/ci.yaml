@@ -45,8 +45,70 @@ jobs:
         DB_DATABASE: database/database.sqlite
       run: php artisan test --testsuite=Feature --env=local
 
-  containerize:
+  livetest:
     needs: unittest
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        ports:
+        - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: app_db
+          MYSQL_USER: app_user
+          MYSQL_PASSWORD: secret_pass
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
+      with:
+        php-version: '8.3'
+        extensions: pdo_mysql
+        coverage: none
+      
+    - name: Prepare for bootstrapping
+      env:
+        DB_CONNECTION: mysql
+        DB_HOST: 127.0.0.1
+        DB_PORT: 3306
+        DB_DATABASE: app_db
+        DB_USERNAME: app_user
+        DB_PASSWORD: secret_pass
+      run: |
+        composer install -q --no-ansi --no-interaction --no-progress --no-dev --prefer-dist --optimize-autoloader
+        mkdir -p storage bootstrap/cache \
+          && chown -R www-data:www-data /var/www \
+          && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+        head -n -2 entrypoint.sh > tmp.sh && mv tmp.sh entrypoint.sh
+        chmod +x ./entrypoint.sh
+        ./entrypoint.sh
+
+    - name: Start Laravel dev server
+      run: php artisan serve --host=127.0.0.1 --port=8000 &
+
+    - name: Test api /users
+      run: |
+        curl --fail -X POST http://127.0.0.1:8000/api/users \
+          -H "Content-Type: application/json" \
+          -d '{
+            "user": {
+              "email": "janedoe@example.com",
+              "password": "password123",
+              "username": "janedoe"
+            }
+          }' | jq
+
+  containerize:
+    needs: livetest
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -130,65 +192,3 @@ jobs:
           --key cosign.pub \
           --type cyclonedx \
           ${{ steps.digest.outputs.digest }}
-
-  live_test:
-    needs: unittest
-    runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.0
-        ports:
-        - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: app_db
-          MYSQL_USER: app_user
-          MYSQL_PASSWORD: secret_pass
-        options: >-
-          --health-cmd="mysqladmin ping --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup PHP
-      uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
-      with:
-        php-version: '8.3'
-        extensions: pdo_mysql
-        coverage: none
-      
-    - name: Prepare for bootstrapping
-      env:
-        DB_CONNECTION: mysql
-        DB_HOST: 127.0.0.1
-        DB_PORT: 3306
-        DB_DATABASE: app_db
-        DB_USERNAME: app_user
-        DB_PASSWORD: secret_pass
-      run: |
-        composer install -q --no-ansi --no-interaction --no-progress --no-dev --prefer-dist --optimize-autoloader
-        mkdir -p storage bootstrap/cache \
-          && chown -R www-data:www-data /var/www \
-          && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
-        head -n -2 entrypoint.sh > tmp.sh && mv tmp.sh entrypoint.sh
-        chmod +x ./entrypoint.sh
-        ./entrypoint.sh
-
-    - name: Start Laravel dev server
-      run: php artisan serve --host=127.0.0.1 --port=8000 &
-
-    - name: Test api /users
-      run: |
-        curl --fail -X POST http://127.0.0.1:8000/api/users \
-          -H "Content-Type: application/json" \
-          -d '{
-            "user": {
-              "email": "janedoe@example.com",
-              "password": "password123",
-              "username": "janedoe"
-            }
-          }' | jq
