@@ -132,6 +132,7 @@ jobs:
           ${{ steps.digest.outputs.digest }}
 
   dbping:
+    needs: test
     runs-on: ubuntu-latest
     services:
       mysql:
