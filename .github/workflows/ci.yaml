@@ -9,7 +9,7 @@ on:
     - "main"
 
 jobs:
-  test:
+  unittest:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -46,7 +46,7 @@ jobs:
       run: php artisan test --testsuite=Feature --env=local
 
   containerize:
-    needs: test
+    needs: unittest
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -131,14 +131,14 @@ jobs:
           --type cyclonedx \
           ${{ steps.digest.outputs.digest }}
 
-  dbping:
-    needs: test
+  live_test:
+    needs: unittest
     runs-on: ubuntu-latest
     services:
       mysql:
         image: mysql:8.0
         ports:
-          - 3306:3306
+        - 3306:3306
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: app_db
@@ -149,6 +149,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -182,12 +183,12 @@ jobs:
 
     - name: Test api /users
       run: |
-        curl -X POST http://localhost/api/users \
-        -H "Content-Type: application/json" \
-        -d '{
-          "user": {
-            "email": "janedoe@example.com",
-            "password": "password123",
-            "username": "janedoe"
-          }
-        }' | jq
+        curl --fail -X POST http://127.0.0.1:8000/api/users \
+          -H "Content-Type: application/json" \
+          -d '{
+            "user": {
+              "email": "janedoe@example.com",
+              "password": "password123",
+              "username": "janedoe"
+            }
+          }' | jq
