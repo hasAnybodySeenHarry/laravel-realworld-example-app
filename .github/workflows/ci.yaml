@@ -12,10 +12,6 @@ jobs:
   unittest:
     runs-on: ubuntu-latest
     steps:
-    - name: Workflow file name
-      run: |
-        echo ${{ github.workflow_ref }}
-
     - name: Checkout code
       uses: actions/checkout@v4
 
@@ -180,7 +176,7 @@ jobs:
     - name: Verify Signature
       run: |
         cosign verify \
-          --certificate-identity-regexp "https://github\.com/${{ github.repository }}/.github/workflows/${{ github.workflow }}@.*" \
+          --certificate-identity-regexp "https://github\.com/${{ github.workflow_ref }}" \
           --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
           ${{ steps.digest.outputs.digest }}
 
@@ -188,6 +184,6 @@ jobs:
       run: |
         cosign verify-attestation \
           --type cyclonedx \
-          --certificate-identity-regexp "https://github\.com/${{ github.repository }}/.github/workflows/${{ github.workflow }}@.*" \
+          --certificate-identity-regexp "https://github\.com/${{ github.workflow_ref }}" \
           --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
           ${{ steps.digest.outputs.digest }}
