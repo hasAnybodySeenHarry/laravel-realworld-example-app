@@ -177,6 +177,7 @@ jobs:
       run: |
         cosign verify \
           --certificate-identity-regexp "https://github\.com/hasAnybodySeenHarry/laravel-realworld-example-app/.github/workflows/ci.yaml@.*" \
+          --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
           ${{ steps.digest.outputs.digest }}
 
     - name: Verify Attestation
