@@ -175,7 +175,9 @@ jobs:
 
     - name: Verify Signature
       run: |
-        cosign verify ${{ steps.digest.outputs.digest }}
+        cosign verify \
+          --certificate-identity-regexp "https://github\.com/hasAnybodySeenHarry/laravel-realworld-example-app/.github/workflows/ci.yaml@.*" \
+          ${{ steps.digest.outputs.digest }}
 
     - name: Verify Attestation
       run: |
