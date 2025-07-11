@@ -6,7 +6,7 @@ WORKDIR /var/www
 
 COPY . .
 
-RUN composer install --no-dev --prefer-dist --optimize-autoloader
+RUN composer install -q --no-ansi --no-interaction --no-progress --no-dev --prefer-dist --optimize-autoloader
 
 FROM php:8.3-fpm-alpine
 
