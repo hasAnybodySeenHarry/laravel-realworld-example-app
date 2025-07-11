@@ -112,6 +112,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
 
     env:
       IMAGE: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
@@ -154,9 +155,6 @@ jobs:
     - name: Install Cosign
       uses: sigstore/cosign-installer@v3
 
-    - name: Import private key
-      run: echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
-
     - name: Install Syft
       uses: anchore/sbom-action/download-syft@v0.15.4
 
@@ -166,29 +164,21 @@ jobs:
 
     - name: Sign image
       run: |
-        COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" \
-        cosign sign --key cosign.key --yes ${{ steps.digest.outputs.digest }}
+        cosign sign --yes ${{ steps.digest.outputs.digest }}
 
     - name: Attest SBOM
       run: |
-        COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" \
-        cosign attest --key cosign.key --yes \
+        cosign attest --yes \
           --predicate sbom.cdx.json \
           --type cyclonedx \
           ${{ steps.digest.outputs.digest }}
 
-    - name: Import public key
-      run: echo "${{ secrets.COSIGN_PUBLIC_KEY }}" > cosign.pub
-
     - name: Verify Signature
       run: |
-        COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" \
-        cosign verify --key cosign.pub ${{ steps.digest.outputs.digest }}
+        cosign verify ${{ steps.digest.outputs.digest }}
 
     - name: Verify Attestation
       run: |
-        COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" \
         cosign verify-attestation \
-          --key cosign.pub \
           --type cyclonedx \
           ${{ steps.digest.outputs.digest }}
