@@ -119,6 +119,10 @@ jobs:
       TAG: latest
 
     steps:
+    - name: Workflow file name
+      run: |
+        echo {{github.workflow_ref}}
+
     - name: Checkout code
       uses: actions/checkout@v4
 
