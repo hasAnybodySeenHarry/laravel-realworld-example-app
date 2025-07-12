@@ -1,0 +1,43 @@
+# Node / Frontend artifacts
+/node_modules
+/public/hot
+/public/storage
+/npm-debug.log
+/yarn-error.log
+
+# Laravel specific
+/vendor
+/storage/*.key
+.env
+.env.*
+.phpunit.result.cache
+
+# Docker & environment config
+docker-compose.override.yml
+Homestead.json
+Homestead.yaml
+composer-setup.php
+composer
+Dockerfile*
+.dockerignore
+nginx.conf
+
+# IDEs & local configs
+/.idea
+/.vscode
+/.DS_Store
+Thumbs.db
+
+# OS / system
+*.swp
+*~
+
+# Test coverage / logs / results
+coverage
+.phpunit.result.cache
+*.log
+tests/
+
+# Git (optional if building from inside git repo)
+.git
+.gitignore
